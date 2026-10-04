@@ -18,6 +18,10 @@ on:
         description: 'Android package name'
         required: true
         default: 'com.example.myapp'
+      build_variant:
+        description: 'Build variant'
+        required: true
+        default: 'debug'
 
 permissions:
   contents: write
@@ -39,16 +43,16 @@ jobs:
           echo "APP_NAME=${{ inputs.app_name }}" >> "$GITHUB_ENV"
           echo "PACKAGE_NAME=${{ inputs.package_name }}" >> "$GITHUB_ENV"
           echo "BUILD_TAG=${{ inputs.build_tag }}" >> "$GITHUB_ENV"
+          echo "BUILD_VARIANT=${{ inputs.build_variant }}" >> "$GITHUB_ENV"
 
       - name: Set up Java 17
-        if: env.BUILD_TYPE == 'android-native' || env.BUILD_TYPE == 'capacitor' || env.BUILD_TYPE == 'react' || env.BUILD_TYPE == 'vue' || env.BUILD_TYPE == 'angular' || env.BUILD_TYPE == 'web-html'
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
 
       - name: Set up Node 20
-        if: env.BUILD_TYPE == 'capacitor' || env.BUILD_TYPE == 'react' || env.BUILD_TYPE == 'vue' || env.BUILD_TYPE == 'angular' || env.BUILD_TYPE == 'web-html'
+        if: env.BUILD_TYPE == 'capacitor' || env.BUILD_TYPE == 'react' || env.BUILD_TYPE == 'react-native' || env.BUILD_TYPE == 'vue' || env.BUILD_TYPE == 'angular' || env.BUILD_TYPE == 'web-html'
         uses: actions/setup-node@v4
         with:
           node-version: '20'
@@ -60,23 +64,34 @@ jobs:
           channel: stable
           cache: true
 
+      - name: Set up Gradle
+        if: env.BUILD_TYPE != 'flutter'
+        uses: gradle/actions/setup-gradle@v4
+
       - name: Build Android Native
-        if: env.BUILD_TYPE == 'android-native'
+        if: env.BUILD_TYPE == 'android-native' || env.BUILD_TYPE == 'android-source'
         shell: bash
         run: |
-          chmod +x gradlew 2>/dev/null || true
+          TASK="assembleDebug"
+          [ "$BUILD_VARIANT" = "release" ] && TASK="assembleRelease"
           if [ -x ./gradlew ]; then
-            ./gradlew --no-daemon assembleDebug --stacktrace
+            chmod +x gradlew
+            ./gradlew --no-daemon $TASK --stacktrace
           else
-            gradle --no-daemon assembleDebug --stacktrace
+            gradle --no-daemon $TASK --stacktrace
           fi
 
       - name: Build Flutter
         if: env.BUILD_TYPE == 'flutter'
         shell: bash
         run: |
+          if [ ! -d android ]; then flutter create . --platforms=android; fi
           flutter pub get
-          flutter build apk --debug
+          if [ "$BUILD_VARIANT" = "release" ]; then
+            flutter build apk --release
+          else
+            flutter build apk --debug
+          fi
 
       - name: Build Node / Capacitor
         if: env.BUILD_TYPE == 'capacitor' || env.BUILD_TYPE == 'react' || env.BUILD_TYPE == 'vue' || env.BUILD_TYPE == 'angular'
@@ -88,17 +103,27 @@ jobs:
             WEB_DIR=dist
             [ -d build ] && [ ! -d dist ] && WEB_DIR=build
             [ -d www ] && [ ! -d dist ] && [ ! -d build ] && WEB_DIR=www
-            WEB_DIR="$WEB_DIR" node -e 'const fs=require("fs"),j=JSON.stringify;fs.writeFileSync("capacitor.config.ts","import type { CapacitorConfig } from "@capacitor/cli";\
-const config: CapacitorConfig = { appId: "+j(process.env.PACKAGE_NAME)+", appName: "+j(process.env.APP_NAME)+", webDir: "+j(process.env.WEB_DIR)+", bundledWebRuntime: false };\
-export default config;\
-")'
+            WEB_DIR="$WEB_DIR" node -e 'const fs=require("fs"),j=JSON.stringify;fs.writeFileSync("capacitor.config.ts","import type { CapacitorConfig } from \"@capacitor/cli\";\nconst config: CapacitorConfig = { appId: "+j(process.env.PACKAGE_NAME)+", appName: "+j(process.env.APP_NAME)+", webDir: "+j(process.env.WEB_DIR)+", bundledWebRuntime: false };\nexport default config;\n")'
           fi
           npm install @capacitor/core @capacitor/cli @capacitor/android
           npx cap add android || true
           npx cap sync android
           cd android
           chmod +x gradlew
-          ./gradlew --no-daemon assembleDebug --stacktrace
+          TASK="assembleDebug"
+          [ "$BUILD_VARIANT" = "release" ] && TASK="assembleRelease"
+          ./gradlew --no-daemon $TASK --stacktrace
+
+      - name: Build React Native
+        if: env.BUILD_TYPE == 'react-native'
+        shell: bash
+        run: |
+          if [ -f package-lock.json ]; then npm ci; else npm install; fi
+          cd android
+          chmod +x gradlew
+          TASK="assembleDebug"
+          [ "$BUILD_VARIANT" = "release" ] && TASK="assembleRelease"
+          ./gradlew --no-daemon $TASK --stacktrace
 
       - name: Build HTML Web App
         if: env.BUILD_TYPE == 'web-html'
@@ -118,7 +143,9 @@ export default config;\
           npx cap sync android
           cd android
           chmod +x gradlew
-          ./gradlew --no-daemon assembleDebug --stacktrace
+          TASK="assembleDebug"
+          [ "$BUILD_VARIANT" = "release" ] && TASK="assembleRelease"
+          ./gradlew --no-daemon $TASK --stacktrace
 
       - name: Collect APKs
         shell: bash
@@ -130,14 +157,22 @@ export default config;\
             dir=$(dirname "$f" | tr '/ ' '__')
             cp "$f" "dist-apk/${dir}__${base}"
           done
-          find dist-apk -type f -name '*.apk' -print -exec ls -lh {} ;
+          find dist-apk -type f -name '*.apk' -print -exec ls -lh {} \;
           test -n "$(find dist-apk -type f -name '*.apk' -print -quit)"
+
+      - name: Upload APK artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: apk-build-${{ github.run_id }}
+          path: dist-apk/*.apk
+          retention-days: 30
 
       - name: Publish APK release
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          gh release delete "$BUILD_TAG" --repo "$GITHUB_REPOSITORY" --yes --cleanup-tag 2>/dev/null || true
           gh release create "$BUILD_TAG" dist-apk/*.apk --repo "$GITHUB_REPOSITORY" --title "Smart APK - $APP_NAME" --notes "Build $GITHUB_RUN_ID" --target "$GITHUB_SHA"
 
       - name: Save build metadata
@@ -146,4 +181,4 @@ export default config;\
           GH_TOKEN: ${{ github.token }}
         run: |
           printf '{"run_id":"%s","tag":"%s","app":"%s"}\n' "$GITHUB_RUN_ID" "$BUILD_TAG" "$APP_NAME" > dist-apk/build-info.json
-          gh release upload "$BUILD_TAG" dist-apk/build-info.json --repo "$GITHUB_REPOSITORY"
+          gh release upload "$BUILD_TAG" dist-apk/build-info.json --repo "$GITHUB_REPOSITORY" --clobber
