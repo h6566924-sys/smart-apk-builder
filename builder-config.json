@@ -1,0 +1,7 @@
+{
+  "buildType": "web-html",
+  "appName": "Smart_GitHub_APK_Builder_v1",
+  "packageName": "com.example.myapp",
+  "buildTag": "smart-apk-1791141767151-mdpu",
+  "variant": "debug"
+}
