@@ -1,0 +1,149 @@
+name: Smart APK Builder
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: 'Project build type'
+        required: true
+        default: 'android-native'
+      build_tag:
+        description: 'Release tag'
+        required: true
+      app_name:
+        description: 'App name'
+        required: true
+        default: 'Smart App'
+      package_name:
+        description: 'Android package name'
+        required: true
+        default: 'com.example.myapp'
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - name: Checkout project
+        uses: actions/checkout@v4
+
+      - name: Read builder configuration
+        shell: bash
+        run: |
+          test -f builder-config.json && cat builder-config.json || true
+          echo "BUILD_TYPE=${{ inputs.build_type }}" >> "$GITHUB_ENV"
+          echo "APP_NAME=${{ inputs.app_name }}" >> "$GITHUB_ENV"
+          echo "PACKAGE_NAME=${{ inputs.package_name }}" >> "$GITHUB_ENV"
+          echo "BUILD_TAG=${{ inputs.build_tag }}" >> "$GITHUB_ENV"
+
+      - name: Set up Java 17
+        if: env.BUILD_TYPE == 'android-native' || env.BUILD_TYPE == 'capacitor' || env.BUILD_TYPE == 'react' || env.BUILD_TYPE == 'vue' || env.BUILD_TYPE == 'angular' || env.BUILD_TYPE == 'web-html'
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Node 20
+        if: env.BUILD_TYPE == 'capacitor' || env.BUILD_TYPE == 'react' || env.BUILD_TYPE == 'vue' || env.BUILD_TYPE == 'angular' || env.BUILD_TYPE == 'web-html'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Set up Flutter
+        if: env.BUILD_TYPE == 'flutter'
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Build Android Native
+        if: env.BUILD_TYPE == 'android-native'
+        shell: bash
+        run: |
+          chmod +x gradlew 2>/dev/null || true
+          if [ -x ./gradlew ]; then
+            ./gradlew --no-daemon assembleDebug --stacktrace
+          else
+            gradle --no-daemon assembleDebug --stacktrace
+          fi
+
+      - name: Build Flutter
+        if: env.BUILD_TYPE == 'flutter'
+        shell: bash
+        run: |
+          flutter pub get
+          flutter build apk --debug
+
+      - name: Build Node / Capacitor
+        if: env.BUILD_TYPE == 'capacitor' || env.BUILD_TYPE == 'react' || env.BUILD_TYPE == 'vue' || env.BUILD_TYPE == 'angular'
+        shell: bash
+        run: |
+          if [ -f package-lock.json ]; then npm ci; else npm install; fi
+          npm run build --if-present
+          if [ ! -f capacitor.config.json ] && [ ! -f capacitor.config.ts ]; then
+            WEB_DIR=dist
+            [ -d build ] && [ ! -d dist ] && WEB_DIR=build
+            [ -d www ] && [ ! -d dist ] && [ ! -d build ] && WEB_DIR=www
+            WEB_DIR="$WEB_DIR" node -e 'const fs=require("fs"),j=JSON.stringify;fs.writeFileSync("capacitor.config.ts","import type { CapacitorConfig } from "@capacitor/cli";\
+const config: CapacitorConfig = { appId: "+j(process.env.PACKAGE_NAME)+", appName: "+j(process.env.APP_NAME)+", webDir: "+j(process.env.WEB_DIR)+", bundledWebRuntime: false };\
+export default config;\
+")'
+          fi
+          npm install @capacitor/core @capacitor/cli @capacitor/android
+          npx cap add android || true
+          npx cap sync android
+          cd android
+          chmod +x gradlew
+          ./gradlew --no-daemon assembleDebug --stacktrace
+
+      - name: Build HTML Web App
+        if: env.BUILD_TYPE == 'web-html'
+        shell: bash
+        run: |
+          rm -rf www
+          mkdir -p www
+          if command -v rsync >/dev/null 2>&1; then
+            rsync -a --exclude='.git' --exclude='www' --exclude='android' --exclude='node_modules' --exclude='dist-apk' ./ www/
+          else
+            tar --exclude=.git --exclude=www --exclude=android --exclude=node_modules --exclude=dist-apk -cf - . | tar -xf - -C www
+          fi
+          npm init -y >/dev/null 2>&1
+          npm install @capacitor/core @capacitor/cli @capacitor/android
+          npx cap init "$APP_NAME" "$PACKAGE_NAME" --web-dir=www
+          npx cap add android
+          npx cap sync android
+          cd android
+          chmod +x gradlew
+          ./gradlew --no-daemon assembleDebug --stacktrace
+
+      - name: Collect APKs
+        shell: bash
+        run: |
+          rm -rf dist-apk
+          mkdir -p dist-apk
+          find . -type f -name '*.apk' -not -path './dist-apk/*' -print0 | while IFS= read -r -d '' f; do
+            base=$(basename "$f")
+            dir=$(dirname "$f" | tr '/ ' '__')
+            cp "$f" "dist-apk/${dir}__${base}"
+          done
+          find dist-apk -type f -name '*.apk' -print -exec ls -lh {} ;
+          test -n "$(find dist-apk -type f -name '*.apk' -print -quit)"
+
+      - name: Publish APK release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$BUILD_TAG" dist-apk/*.apk --repo "$GITHUB_REPOSITORY" --title "Smart APK - $APP_NAME" --notes "Build $GITHUB_RUN_ID" --target "$GITHUB_SHA"
+
+      - name: Save build metadata
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          printf '{"run_id":"%s","tag":"%s","app":"%s"}\n' "$GITHUB_RUN_ID" "$BUILD_TAG" "$APP_NAME" > dist-apk/build-info.json
+          gh release upload "$BUILD_TAG" dist-apk/build-info.json --repo "$GITHUB_REPOSITORY"
