@@ -1,0 +1,126 @@
+name: Rafiki APK Builder
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: 'auto | android | flutter | capacitor'
+        required: false
+        default: 'auto'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout project
+        uses: actions/checkout@v6
+
+      - name: Detect project
+        id: detect
+        shell: bash
+        run: |
+          set -e
+          TYPE="${{ inputs.build_type }}"
+          if [ "$TYPE" = "auto" ] || [ -z "$TYPE" ]; then
+            if [ -f pubspec.yaml ]; then TYPE=flutter
+            elif [ -f capacitor.config.json ] || [ -f capacitor.config.ts ]; then TYPE=capacitor
+            elif [ -f gradlew ] || find . -maxdepth 5 -name AndroidManifest.xml -print -quit | grep -q .; then TYPE=android
+            else TYPE=unknown
+            fi
+          fi
+          echo "type=$TYPE" >> "$GITHUB_OUTPUT"
+          echo "Detected: $TYPE"
+
+      - name: Setup Java
+        if: steps.detect.outputs.type == 'android' || steps.detect.outputs.type == 'capacitor'
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Gradle
+        if: steps.detect.outputs.type == 'android' || steps.detect.outputs.type == 'capacitor'
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: current
+          cache-provider: basic
+
+      - name: Setup Flutter
+        if: steps.detect.outputs.type == 'flutter'
+        uses: subosito/flutter-action@v2.23.0
+        with:
+          channel: stable
+          cache: true
+
+      - name: Setup Node
+        if: steps.detect.outputs.type == 'capacitor'
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Build Android native
+        if: steps.detect.outputs.type == 'android'
+        shell: bash
+        run: |
+          set -e
+          if [ -f gradlew ]; then
+            chmod +x gradlew
+            ./gradlew assembleDebug --stacktrace --no-daemon
+          elif [ -f settings.gradle ] || [ -f settings.gradle.kts ]; then
+            gradle assembleDebug --stacktrace --no-daemon
+          else
+            echo "لا يوجد Gradle project صالح" >&2
+            exit 1
+          fi
+
+      - name: Build Flutter APK
+        if: steps.detect.outputs.type == 'flutter'
+        shell: bash
+        run: |
+          set -e
+          flutter pub get
+          flutter build apk --debug
+
+      - name: Build Capacitor Android
+        if: steps.detect.outputs.type == 'capacitor'
+        shell: bash
+        run: |
+          set -e
+          npm install
+          npx cap sync android
+          cd android
+          if [ -f gradlew ]; then
+            chmod +x gradlew
+            ./gradlew assembleDebug --stacktrace --no-daemon
+          else
+            gradle assembleDebug --stacktrace --no-daemon
+          fi
+
+      - name: Reject unsupported project
+        if: steps.detect.outputs.type == 'unknown'
+        run: |
+          echo "المشروع غير مدعوم تلقائيًا. ارفع مشروع Android أو Flutter أو Capacitor كامل." >&2
+          exit 1
+
+      - name: Collect APK
+        shell: bash
+        run: |
+          set -e
+          rm -rf apk-output
+          mkdir -p apk-output
+          find . -type f -name '*.apk' -not -path './apk-output/*' -print -exec cp {} apk-output/ \;
+          test -n "$(find apk-output -type f -name '*.apk' -print -quit)"
+          ls -lh apk-output
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: apk-output
+          path: apk-output/*.apk
+          if-no-files-found: error
+          retention-days: 7

@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#171717">
+<title>مُنشئ APK عبر GitHub</title>
+<style>
+:root{--bg:#212121;--side:#171717;--panel:#2b2b2b;--line:#3d3d3d;--text:#f4f4f4;--muted:#a7a7a7;--cyan:#20e6ff;--good:#58e28b;--bad:#ff6b6b;}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Tahoma,Arial,sans-serif}button,input,select{font:inherit}button{cursor:pointer}
+.app{min-height:100vh;display:grid;grid-template-columns:280px 1fr}.side{background:var(--side);padding:18px;border-left:1px solid #111;position:sticky;top:0;height:100vh;overflow:auto}.brand{font-size:22px;font-weight:800;margin-bottom:18px}.brand small{display:block;color:var(--cyan);font-size:12px;margin-top:5px}.nav button{width:100%;padding:12px;border:1px solid var(--line);background:#202020;color:var(--text);border-radius:12px;margin:5px 0;text-align:right}.main{padding:18px;max-width:1100px;width:100%;margin:auto}.hero{background:linear-gradient(180deg,#2a2a2a,#252525);border:1px solid var(--line);border-radius:20px;padding:20px;box-shadow:0 0 24px rgba(32,230,255,.06)}h1{margin:0 0 7px;font-size:27px}.muted{color:var(--muted)}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:14px}.card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:16px}.full{grid-column:1/-1}.label{font-size:13px;color:var(--muted);margin-bottom:7px}.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.input{width:100%;padding:13px;border-radius:12px;border:1px solid var(--line);background:#191919;color:var(--text);outline:none}.input:focus{border-color:var(--cyan);box-shadow:0 0 0 2px rgba(32,230,255,.12)}.btn{border:1px solid var(--line);background:#1d1d1d;color:var(--text);padding:11px 14px;border-radius:12px}.btn.primary{border-color:var(--cyan);box-shadow:0 0 13px rgba(32,230,255,.1)}.btn.good{border-color:var(--good)}.btn:disabled{opacity:.45;cursor:not-allowed}.status{margin-top:10px;padding:11px;border-radius:12px;background:#1c1c1c;border:1px solid var(--line);white-space:pre-wrap}.status.good{border-color:rgba(88,226,139,.5)}.status.bad{border-color:rgba(255,107,107,.5)}.repo-list{max-height:300px;overflow:auto;margin-top:10px}.repo{display:flex;justify-content:space-between;gap:10px;padding:11px;border:1px solid var(--line);border-radius:12px;margin:7px 0;background:#202020}.repo b{display:block}.repo small{color:var(--muted)}.steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.step{border:1px solid var(--line);border-radius:12px;padding:10px;background:#1d1d1d;color:var(--muted);font-size:12px}.step.on{border-color:var(--cyan);color:var(--text);box-shadow:0 0 10px rgba(32,230,255,.08)}.step.done{border-color:rgba(88,226,139,.5);color:var(--good)}.logs{min-height:180px;max-height:360px;overflow:auto;background:#111;padding:12px;border-radius:12px;font-family:ui-monospace,monospace;font-size:12px;direction:ltr;text-align:left;white-space:pre-wrap}.pill{display:inline-flex;padding:5px 9px;border-radius:999px;background:#181818;border:1px solid var(--line);font-size:12px;margin:3px}.note{font-size:12px;color:#bfbfbf;line-height:1.7}.hide{display:none!important}.filebox{border:1px dashed #555;border-radius:14px;padding:18px;text-align:center;background:#1c1c1c}.download{display:block;text-decoration:none;text-align:center;margin-top:10px}.topbar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px}.lang{font-size:12px;color:var(--muted)}
+@media(max-width:820px){.app{display:block}.side{position:static;height:auto;border-left:0;border-bottom:1px solid #111}.grid{grid-template-columns:1fr}.full{grid-column:auto}.steps{grid-template-columns:repeat(2,minmax(0,1fr))}.main{padding:12px}.hero{border-radius:16px}h1{font-size:23px}}
+</style>
+</head>
+<body>
+<div class="app">
+<aside class="side">
+  <div class="brand">🧩 مُنشئ APK <small>GitHub • Fine-grained</small></div>
+  <div class="nav">
+    <button onclick="scrollToId('connect')">🔐 اتصال GitHub</button>
+    <button onclick="scrollToId('project')">📦 المشروع</button>
+    <button onclick="scrollToId('build')">⚙️ البناء</button>
+    <button onclick="scrollToId('logs')">📜 السجل</button>
+  </div>
+  <div class="card" style="margin-top:14px">
+    <div class="label">ماذا يفعل الموقع؟</div>
+    <div class="note">يرفع الملفات إلى مستودعك، يضيف workflow خاصًا بالبناء، يشغّل GitHub Actions ثم يعرض نتيجة البناء وملف APK كـ artifact.</div>
+  </div>
+</aside>
+<main class="main">
+  <div class="topbar"><div class="lang">واجهة عربية RTL • تعمل من الهاتف</div><span id="connPill" class="pill">غير متصل</span></div>
+  <section class="hero"><h1>تحويل مشروعك إلى APK عبر GitHub</h1><div class="muted">بدون خادم Android خارجي: GitHub Actions هو الذي ينفذ عملية البناء.</div></section>
+
+  <div class="grid">
+    <section id="connect" class="card">
+      <div class="label">1) مفتاح GitHub الحديث</div><div class="row" style="margin-bottom:9px"><a class="btn" href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">🔗 إنشاء Fine-grained token</a></div>
+      <input id="token" class="input" type="password" placeholder="github_pat_..." autocomplete="off">
+      <div class="row" style="margin-top:9px">
+        <label class="note"><input id="remember" type="checkbox"> حفظ المفتاح على الجهاز</label>
+        <button class="btn primary" onclick="connect()">اختبار الاتصال</button>
+        <button class="btn" onclick="clearToken()">مسح</button>
+      </div>
+      <div class="note" style="margin-top:8px">لرفع المشروع وتشغيل البناء: Actions = Read and write، Contents = Read and write، Workflows = Write، Metadata = Read. إنشاء مستودع جديد يحتاج صلاحيات إدارة/إنشاء إضافية.</div>
+      <div id="connStatus" class="status">لم يتم الاختبار بعد.</div>
+    </section>
+
+    <section class="card">
+      <div class="label">2) المستودع</div>
+      <input id="repoSearch" class="input" placeholder="ابحث في مستودعاتك" oninput="filterRepos()">
+      <div class="row" style="margin-top:9px"><button class="btn" onclick="loadRepos()">تحديث المستودعات</button><span id="repoCount" class="pill">0</span></div>
+      <div id="repos" class="repo-list"></div>
+      <input id="repo" class="input" style="margin-top:9px" placeholder="owner/repository" readonly>
+      <div id="repoStatus" class="status">اختر مستودعًا.</div>
+    </section>
+
+    <section id="project" class="card full">
+      <div class="label">3) المشروع</div>
+      <div class="filebox">
+        <input id="zip" type="file" accept=".zip,application/zip" style="max-width:100%">
+        <div class="note" style="margin-top:8px">يدعم ZIP لمشروع Android / Flutter / Capacitor. الموقع يفك ZIP ويحافظ على مسارات الملفات.</div>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <select id="buildType" class="input" style="max-width:260px">
+          <option value="auto">اكتشاف تلقائي</option><option value="android">Android native</option><option value="flutter">Flutter</option><option value="capacitor">Capacitor</option>
+        </select>
+        <button class="btn primary" onclick="inspectZip()">فحص ZIP</button>
+        <button class="btn" onclick="uploadProject()">رفع المشروع</button>
+      </div>
+      <div id="projectStatus" class="status">لم يتم اختيار مشروع.</div>
+    </section>
+
+    <section id="build" class="card full">
+      <div class="label">4) مراحل البناء</div>
+      <div class="steps" id="steps"></div>
+      <div class="row" style="margin-top:12px">
+        <button id="buildBtn" class="btn good" onclick="startBuild()" disabled>🚀 بدء بناء APK</button>
+        <button class="btn" onclick="refreshRun()">تحديث الحالة</button>
+        <button class="btn" onclick="loadArtifacts()">البحث عن APK</button>
+      </div>
+      <div id="buildStatus" class="status">جاهز بعد الاتصال واختيار المستودع ورفع المشروع.</div>
+    </section>
+
+    <section id="logs" class="card full">
+      <div class="label">السجل</div>
+      <div id="logsBox" class="logs">سجل الموقع سيظهر هنا...</div>
+      <div id="artifactBox"></div>
+    </section>
+  </div>
+</main>
+</div>
+<script>
+const state={token:'',repos:[],selectedRepo:'',files:[],runId:null,connected:false,uploaded:false,workflow:false};
+const KEY='smart_github_apk_builder_fine_v1';
+const steps=['اتصال GitHub','اختيار المستودع','رفع المشروع','Workflow','تشغيل Actions','البناء','APK'];
+function $(id){return document.getElementById(id)}
+function log(x){$('logsBox').textContent += `\n${new Date().toLocaleTimeString()}  ${x}`; $('logsBox').scrollTop=$('logsBox').scrollHeight}
+function setStatus(id,msg,type=''){const e=$(id);e.textContent=msg;e.className='status '+type}
+function renderSteps(active=-1){$('steps').innerHTML=steps.map((x,i)=>`<div class="step ${i<active?'done':''} ${i===active?'on':''}">${i+1}. ${x}</div>`).join('')}
+function scrollToId(id){$(id).scrollIntoView({behavior:'smooth'})}
+function clearToken(){localStorage.removeItem(KEY);sessionStorage.removeItem(KEY);$('token').value='';state.token='';state.connected=false;$('connPill').textContent='غير متصل';setStatus('connStatus','تم مسح المفتاح.');}
+function saved(){return localStorage.getItem(KEY)||sessionStorage.getItem(KEY)||''}
+window.addEventListener('load',()=>{const t=saved();if(t){$('token').value=t;state.token=t;setStatus('connStatus','تم العثور على مفتاح محفوظ محليًا. اضغط اختبار الاتصال.')}})
+async function api(action,body={}){const r=await fetch('/api/github',{method:'POST',headers:{'content-type':'application/json','authorization':`Bearer ${state.token}`},body:JSON.stringify({action,...body})});let d={};try{d=await r.json()}catch{};if(!r.ok||!d.ok){let msg=d.error||`HTTP ${r.status}`;if(d.acceptedPermissions)msg += `\nالصلاحيات المطلوبة من GitHub: ${d.acceptedPermissions}`;throw new Error(msg)}return d}
+async function connect(){const t=$('token').value.trim();if(!t)return setStatus('connStatus','أدخل المفتاح أولًا.','bad');state.token=t;try{const d=await api('whoami');state.connected=true;$('connPill').textContent='متصل: '+d.user.login;$('remember').checked?localStorage.setItem(KEY,t):sessionStorage.setItem(KEY,t);setStatus('connStatus',`تم الاتصال بنجاح باسم ${d.user.login}.`,'good');log('GitHub: الاتصال ناجح.');renderSteps(1);await loadRepos()}catch(e){state.connected=false;setStatus('connStatus','فشل الاتصال: '+e.message,'bad');log('GitHub ERROR: '+e.message)}}
+async function loadRepos(){if(!state.token)return setStatus('repoStatus','اختبر الاتصال أولًا.','bad');try{const d=await api('repos');state.repos=d.repos;$('repoCount').textContent=d.repos.length+' مستودع';renderRepos();setStatus('repoStatus','اختر المستودع الذي سيبني منه الموقع.')}catch(e){setStatus('repoStatus','تعذر جلب المستودعات: '+e.message,'bad');log('Repos ERROR: '+e.message)}}
+function filterRepos(){renderRepos()}
+function renderRepos(){const q=$('repoSearch').value.trim().toLowerCase();const list=state.repos.filter(r=>r.full_name.toLowerCase().includes(q));$('repos').innerHTML=list.map(r=>`<div class="repo"><div><b>${r.full_name}</b><small>${r.private?'خاص':'عام'} • ${r.default_branch}</small></div><button class="btn" onclick="selectRepo('${r.full_name.replace(/'/g,"\\'")}')">اختيار</button></div>`).join('')||'<div class="note">لا توجد نتائج.</div>'}
+async function selectRepo(name){state.selectedRepo=name;$('repo').value=name;renderSteps(2);try{const d=await api('repo',{repo:name});const p=d.repo.permissions||{};const ok=!!(p.push||p.admin||p.maintain);setStatus('repoStatus',`تم اختيار ${name}. صلاحية الكتابة: ${ok?'موجودة':'غير ظاهرة — قد يفشل الرفع'}`,ok?'good':'bad');log('Repo: '+name)}catch(e){setStatus('repoStatus','تعذر قراءة المستودع: '+e.message,'bad')}}
+function localGuess(files){const paths=files.map(x=>x.path.toLowerCase());if(paths.some(p=>p==='pubspec.yaml'))return 'flutter';if(paths.some(p=>p.endsWith('capacitor.config.json')||p.endsWith('capacitor.config.ts')))return 'capacitor';if(paths.some(p=>p.endsWith('androidmanifest.xml'))||paths.some(p=>p==='gradlew')||paths.some(p=>p==='settings.gradle')||paths.some(p=>p==='settings.gradle.kts'))return 'android';return 'unknown'}
+async function inspectZip(){const z=$('zip').files[0];if(!z)return setStatus('projectStatus','اختر ZIP أولًا.','bad');setStatus('projectStatus','جاري فحص ZIP...');try{const fd=new FormData();fd.append('project',z);const r=await fetch('/api/upload',{method:'POST',body:fd});const d=await r.json();if(!r.ok||!d.ok)throw new Error(d.error||'فشل فحص ZIP');state.files=d.files;state.detected=localGuess(d.files);setStatus('projectStatus',`تم الفحص: ${d.count} ملف • النوع المكتشف: ${state.detected}${d.truncated?' • تم قص الملفات بعد الحد المسموح':''}`,'good');log(`ZIP: ${d.count} files, detected=${state.detected}`);renderSteps(2)}catch(e){setStatus('projectStatus','تعذر فحص ZIP: '+e.message,'bad');log('ZIP ERROR: '+e.message)}}
+async function uploadProject(){if(!WORKFLOW) await loadWorkflow();if(!state.selectedRepo)return setStatus('repoStatus','اختر مستودعًا أولًا.','bad');if(!state.files.length)return setStatus('projectStatus','افحص ZIP أولًا.','bad');try{setStatus('projectStatus','جاري رفع المشروع على دفعات...');let batch=[],batchBytes=0,batchNo=0;for(const f of state.files){const approx=String(f.content||'').length; if(batch.length && batchBytes+approx>3_000_000){batchNo++;const d=await api('write-batch',{repo:state.selectedRepo,files:batch});log(`رفع دفعة ${batchNo}: ${d.count} ملفات`);batch=[];batchBytes=0} batch.push(f);batchBytes+=approx} if(batch.length){batchNo++;const d=await api('write-batch',{repo:state.selectedRepo,files:batch});log(`رفع دفعة ${batchNo}: ${d.count} ملفات`)}const d=await api('write-workflow',{repo:state.selectedRepo,content:WORKFLOW});state.workflow=true;state.uploaded=true;setStatus('projectStatus',`تم رفع ${state.files.length} ملفًا وإضافة Workflow البناء.`,'good');log('Workflow installed. commit='+d.commit_sha);$('buildBtn').disabled=false;renderSteps(4)}catch(e){setStatus('projectStatus','فشل الرفع: '+e.message,'bad');log('UPLOAD ERROR: '+e.message)}}
+async function startBuild(){if(!state.uploaded)return;try{$('buildBtn').disabled=true;setStatus('buildStatus','جاري تشغيل GitHub Actions...');const branch=(await api('repo',{repo:state.selectedRepo})).repo.default_branch;const before=Date.now();await api('dispatch',{repo:state.selectedRepo,workflow:'rafiki-apk-builder.yml',ref:branch,inputs:{build_type:$('buildType').value}});renderSteps(5);log('Workflow dispatch sent.');let found=null;for(let i=0;i<18;i++){await new Promise(r=>setTimeout(r,5000));const d=await api('runs',{repo:state.selectedRepo});const runs=d.runs.filter(x=>Date.parse(x.created_at)>=before-15000);if(runs[0]){found=runs[0];break}}if(!found){setStatus('buildStatus','تم التشغيل لكن لم يظهر run بعد. اضغط تحديث الحالة.','bad');return}$runId=found.id;state.runId=found.id;await watchRun()}catch(e){setStatus('buildStatus','فشل بدء البناء: '+e.message,'bad');log('BUILD START ERROR: '+e.message);$('buildBtn').disabled=false}}
+let $runId=null;
+async function watchRun(){if(!state.runId)return;for(let i=0;i<30;i++){const d=await api('run',{repo:state.selectedRepo,run_id:state.runId});const r=d.run;setStatus('buildStatus',`Run #${r.id}\nالحالة: ${r.status}\nالنتيجة: ${r.conclusion||'...'}`+(r.html_url?`\n${r.html_url}`:''),r.conclusion==='success'?'good':r.conclusion==='failure'?'bad':'');log(`Run #${r.id}: ${r.status} ${r.conclusion||''}`);if(r.status==='completed'){renderSteps(r.conclusion==='success'?6:5);if(r.conclusion==='success')await loadArtifacts();$('buildBtn').disabled=false;return}await new Promise(r=>setTimeout(r,7000))}setStatus('buildStatus','البناء ما زال يعمل. اضغط تحديث الحالة لاحقًا.')}
+async function refreshRun(){await watchRun()}
+async function loadArtifacts(){if(!state.selectedRepo)return;try{const d=await api('artifacts',{repo:state.selectedRepo});const a=d.artifacts.find(x=>x.name==='apk-output'&&!x.expired) || d.artifacts[0];if(!a){$('artifactBox').innerHTML='<div class="note">لم يظهر APK artifact بعد.</div>';return}const url='/api/artifact?artifact_id='+encodeURIComponent(a.id)+'&repo='+encodeURIComponent(state.selectedRepo);$('artifactBox').innerHTML=`<button class="btn primary download" onclick="downloadArtifact(${a.id})">⬇️ تنزيل APK (ZIP)</button><div class="note" style="text-align:center;margin-top:6px">الحجم: ${Math.round(a.size_in_bytes/1024)} KB • صالح حتى ${new Date(a.expires_at).toLocaleString()}</div>`;renderSteps(6)}catch(e){$('artifactBox').innerHTML='<div class="status bad">تعذر البحث عن artifact: '+e.message+'</div>'}}
+async function downloadArtifact(id){const r=await fetch('/api/artifact?artifact_id='+encodeURIComponent(id)+'&repo='+encodeURIComponent(state.selectedRepo),{headers:{authorization:`Bearer ${state.token}`}});if(!r.ok){const t=await r.text();return setStatus('buildStatus','فشل التنزيل: '+t,'bad')}const b=await r.blob();const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='apk-output.zip';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000)}
+let WORKFLOW='';
+async function loadWorkflow(){const r=await fetch('/workflow.yml',{cache:'no-store'});if(!r.ok)throw new Error('تعذر تحميل ملف Workflow من الموقع');WORKFLOW=await r.text()}
+renderSteps(0);
+</script>
+</body>
+</html>
